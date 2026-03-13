@@ -7,4 +7,4 @@ COPY src/ ./src/
 
 RUN pip install --no-cache-dir .
 
-CMD ["mass-mcp"]
+CMD ["music-assistant-mcp"]

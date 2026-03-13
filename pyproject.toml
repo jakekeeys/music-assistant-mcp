@@ -3,13 +3,13 @@ requires = ["setuptools>=75.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mass-mcp"
+name = "music-assistant-mcp"
 version = "0.1.0"
 description = "MCP Server for Music Assistant - control your music library, players, and queues with AI"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"
-authors = [{ name = "mass-mcp contributors" }]
+authors = [{ name = "music-assistant-mcp contributors" }]
 keywords = ["mcp", "music-assistant", "ai", "smart-home", "music"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -27,11 +27,11 @@ dependencies = [
 ]
 
 [project.scripts]
-mass-mcp = "mass_mcp.__main__:main"
-mass-mcp-web = "mass_mcp.__main__:main_web"
+music-assistant-mcp = "music_assistant_mcp.__main__:main"
+music-assistant-mcp-web = "music_assistant_mcp.__main__:main_web"
 
 [project.urls]
-Homepage = "https://github.com/mass-mcp/mass-mcp"
+Homepage = "https://github.com/jakekeeys/music-assistant-mcp"
 
 [tool.setuptools.packages.find]
 where = ["src"]

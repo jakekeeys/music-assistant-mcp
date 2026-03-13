@@ -1,8 +1,8 @@
 services:
-  mass-mcp:
+  music-assistant-mcp:
     build: .
     # HTTP transport so we can test from the host
-    command: ["mass-mcp-web"]
+    command: ["music-assistant-mcp-web"]
     ports:
       - "8086:8086"
     environment:

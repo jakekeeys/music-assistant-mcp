@@ -2,7 +2,7 @@
 
 An MCP (Model Context Protocol) server that enables AI assistants to interact with [Music Assistant](https://music-assistant.io). Control your music library, players, queues, and playlists using natural language.
 
-Built with [FastMCP](https://github.com/jlowin/fastmcp), .
+Built with [FastMCP](https://github.com/jlowin/fastmcp).
 
 ## Features
 
@@ -49,12 +49,12 @@ export MASS_TOKEN=your_token_here
 
 **stdio mode** (for Claude Desktop, Claude Code, etc.):
 ```bash
-mass-mcp
+music-assistant-mcp
 ```
 
 **HTTP mode** (for web clients):
 ```bash
-mass-mcp-web
+music-assistant-mcp-web
 ```
 
 ## Claude Desktop Configuration
@@ -65,7 +65,7 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "music-assistant": {
-      "command": "mass-mcp",
+      "command": "music-assistant-mcp",
       "env": {
         "MASS_URL": "http://localhost:8095",
         "MASS_TOKEN": "your_token_here"
@@ -82,7 +82,7 @@ Or using uvx (no install needed):
   "mcpServers": {
     "music-assistant": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/your-user/mass-mcp", "mass-mcp"],
+      "args": ["--from", "git+https://github.com/jakekeeys/music-assistant-mcp", "music-assistant-mcp"],
       "env": {
         "MASS_URL": "http://localhost:8095",
         "MASS_TOKEN": "your_token_here"
@@ -108,7 +108,7 @@ Or using uvx (no install needed):
 ## Architecture
 
 ```
-src/mass_mcp/
+src/music_assistant_mcp/
 ├── __init__.py          # Package version
 ├── __main__.py          # Entry points (stdio, HTTP)
 ├── config.py            # Settings from env vars
@@ -126,7 +126,7 @@ src/mass_mcp/
 
 ### Adding New Tools
 
-1. Create `src/mass_mcp/tools/tools_<category>.py`
+1. Create `src/music_assistant_mcp/tools/tools_<category>.py`
 2. Define `register_<category>_tools(mcp, client)` 
 3. Use `@mcp.tool()` to register tools
 4. They're auto-discovered on startup

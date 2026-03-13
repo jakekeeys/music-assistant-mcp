@@ -10,7 +10,7 @@ import logging
 import signal
 import sys
 
-from mass_mcp.server import create_server
+from music_assistant_mcp.server import create_server
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ async def _run_stdio() -> None:
 
 async def _run_web() -> None:
     """Run the MCP server over HTTP (streamable HTTP transport)."""
-    from mass_mcp.config import settings
+    from music_assistant_mcp.config import settings
 
     mcp, client = create_server()
     try:
@@ -68,7 +68,7 @@ def main() -> None:
 def main_web() -> None:
     """HTTP transport entry point."""
     _setup_logging()
-    from mass_mcp.config import settings
+    from music_assistant_mcp.config import settings
 
     logger.info(
         "Starting Music Assistant MCP Server (HTTP) on %s:%s",
