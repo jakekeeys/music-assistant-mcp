@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=75.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mass-mcp"
+version = "0.1.0"
+description = "MCP Server for Music Assistant - control your music library, players, and queues with AI"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+authors = [{ name = "mass-mcp contributors" }]
+keywords = ["mcp", "music-assistant", "ai", "smart-home", "music"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "fastmcp>=2.0.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+mass-mcp = "mass_mcp.__main__:main"
+mass-mcp-web = "mass_mcp.__main__:main_web"
+
+[project.urls]
+Homepage = "https://github.com/mass-mcp/mass-mcp"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
