@@ -61,8 +61,8 @@ class MusicAssistantClient:
             dict if no ``result`` key is present.
 
         Raises:
-            MusicAssistantError: If the server returns an error.
-            httpx.HTTPStatusError: On HTTP-level failures.
+            MusicAssistantError: If the server returns an error (status code
+                and server-provided message).
         """
         self._message_id += 1
         payload: dict[str, Any] = {
@@ -77,20 +77,11 @@ class MusicAssistantClient:
         http = await self._get_http()
         logger.debug("→ %s %s", command, json.dumps(args) if args else "")
         resp = await http.post("/api", json=payload)
-        resp.raise_for_status()
-
-        data = resp.json()
-        # The MA API returns errors as {"error": {"message": ..., "code": ...}}
-        # and results directly as the top-level JSON (list or dict).
-        if isinstance(data, dict) and "error" in data:
-            err = data["error"]
-            if isinstance(err, dict):
-                raise MusicAssistantError(
-                    err.get("message", str(err)),
-                    err.get("code"),
-                )
-            raise MusicAssistantError(str(err))
-        return data
+        # MA returns errors as plain-text bodies with a 400/403/500 status
+        # (e.g. "Invalid Command: foo"); the result is the top-level JSON.
+        if resp.is_error:
+            raise MusicAssistantError(resp.text or resp.reason_phrase, resp.status_code)
+        return resp.json()
 
     # -- convenience helpers -------------------------------------------------
 
@@ -136,12 +127,16 @@ class MusicAssistantClient:
         search_query: str,
         media_types: list[str] | None = None,
         limit: int = 10,
+        library_only: bool = False,
+        providers: list[str] | None = None,
     ) -> dict[str, Any]:
         return await self.command(
             "music/search",
             search_query=search_query,
             media_types=media_types,
             limit=limit,
+            library_only=library_only,
+            providers=providers,
         )
 
     async def get_library_items(
@@ -150,14 +145,12 @@ class MusicAssistantClient:
         limit: int = 25,
         offset: int = 0,
         order_by: str | None = None,
-        in_library_only: bool = True,
     ) -> list[dict[str, Any]]:
         return await self.command(
             f"music/{media_type}s/library_items",
             limit=limit,
             offset=offset,
             order_by=order_by,
-            in_library_only=in_library_only,
         )
 
     async def get_item(
@@ -222,7 +215,7 @@ class MusicAssistantClient:
     # -- playlist management -------------------------------------------------
 
     async def create_playlist(self, name: str) -> dict[str, Any]:
-        return await self.command("music/playlists/create", name=name)
+        return await self.command("music/playlists/create_playlist", name=name)
 
     async def add_playlist_tracks(
         self, db_playlist_id: str, uris: list[str]
@@ -248,12 +241,28 @@ class MusicAssistantClient:
         await self.command("music/favorites/add_item", item=item_uri)
 
     async def remove_from_favorites(self, item_uri: str) -> None:
-        await self.command("music/favorites/remove_item", item=item_uri)
+        media_type, library_item_id = parse_library_uri(item_uri)
+        await self.command(
+            "music/favorites/remove_item",
+            media_type=media_type,
+            library_item_id=library_item_id,
+        )
 
     # -- recently played / in-progress ---------------------------------------
 
     async def get_recently_played(self, limit: int = 10) -> list[dict[str, Any]]:
         return await self.command("music/recently_played_items", limit=limit)
+
+
+def parse_library_uri(uri: str) -> tuple[str, str]:
+    """Split ``library://<media_type>/<item_id>`` into its two parts."""
+    scheme, _, rest = uri.partition("://")
+    media_type, _, item_id = rest.partition("/")
+    if scheme != "library" or not media_type or not item_id:
+        raise MusicAssistantError(
+            f"Expected a library URI like library://track/42, got {uri!r}"
+        )
+    return media_type, item_id
 
 
 class MusicAssistantError(Exception):

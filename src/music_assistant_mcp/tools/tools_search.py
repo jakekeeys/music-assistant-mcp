@@ -13,6 +13,8 @@ def register_search_tools(mcp: Any, client: Any) -> None:
         query: str,
         media_types: list[str] | None = None,
         limit: int = 10,
+        library_only: bool = False,
+        providers: list[str] | None = None,
     ) -> dict[str, Any]:
         """Search across all music providers for tracks, albums, artists, playlists, and radio stations.
 
@@ -21,6 +23,8 @@ def register_search_tools(mcp: Any, client: Any) -> None:
             media_types: Optional list to restrict search. Values: "track", "album",
                 "artist", "playlist", "radio". Default: search all types.
             limit: Maximum results per media type (default 10, max 100).
+            library_only: Only search the local library, not online providers.
+            providers: Restrict to these provider instance ids or domains.
 
         Returns:
             Results grouped by media type, each with name, URI, provider info.
@@ -30,7 +34,13 @@ def register_search_tools(mcp: Any, client: Any) -> None:
             - Search only albums: ma_search("Kind of Blue", media_types=["album"])
             - Search artists: ma_search("Taylor Swift", media_types=["artist"])
         """
-        return await client.search(query, media_types=media_types, limit=limit)
+        return await client.search(
+            query,
+            media_types=media_types,
+            limit=limit,
+            library_only=library_only,
+            providers=providers,
+        )
 
     @mcp.tool()
     async def ma_get_library_artists(
@@ -203,7 +213,10 @@ def register_search_tools(mcp: Any, client: Any) -> None:
         item_id: str,
         provider_instance_id_or_domain: str = "library",
     ) -> dict[str, Any]:
-        """Get top tracks by a specific artist.
+        """Get tracks by a specific artist.
+
+        For a library artist this returns the in-library tracks. Use
+        ma_run_command("music/artists/top_tracks", ...) for provider top tracks.
 
         Args:
             item_id: The artist ID.
@@ -273,3 +286,197 @@ def register_search_tools(mcp: Any, client: Any) -> None:
         """
         items = await client.get_recently_played(limit=limit)
         return {"items": items, "count": len(items)}
+
+    @mcp.tool()
+    async def ma_get_item_by_name(
+        name: str,
+        artist: str | None = None,
+        album: str | None = None,
+        media_type: str | None = None,
+    ) -> dict[str, Any]:
+        """Find a single media item by name, e.g. a playlist or album the user named.
+
+        Faster than ma_search when you already know what you're looking for.
+
+        Args:
+            name: Item name (e.g. "Road Trip", "Kind of Blue").
+            artist: Optional artist name to disambiguate.
+            album: Optional album name to disambiguate.
+            media_type: Optional type: "track", "album", "artist", "playlist", "radio".
+
+        Returns:
+            The best-matching item, or null.
+        """
+        return await client.command(
+            "music/item_by_name", name=name, artist=artist, album=album, media_type=media_type
+        )
+
+    @mcp.tool()
+    async def ma_get_track_by_name(
+        track_name: str,
+        artist_name: str | None = None,
+        album_name: str | None = None,
+    ) -> dict[str, Any]:
+        """Find a single track by name and optional artist/album.
+
+        Args:
+            track_name: Track title.
+            artist_name: Optional artist name.
+            album_name: Optional album name.
+
+        Returns:
+            The best-matching track, or null.
+        """
+        return await client.command(
+            "music/track_by_name",
+            track_name=track_name,
+            artist_name=artist_name,
+            album_name=album_name,
+        )
+
+    @mcp.tool()
+    async def ma_get_artist_top_tracks(
+        item_id: str,
+        provider_instance_id_or_domain: str = "library",
+    ) -> dict[str, Any]:
+        """Get the top / most popular tracks for an artist across providers.
+
+        Args:
+            item_id: The artist ID.
+            provider_instance_id_or_domain: Provider to query (default "library").
+        """
+        items = await client.command(
+            "music/artists/top_tracks",
+            item_id=item_id,
+            provider_instance_id_or_domain=provider_instance_id_or_domain,
+        )
+        return {"tracks": items, "count": len(items)}
+
+    @mcp.tool()
+    async def ma_get_similar_artists(
+        item_id: str,
+        provider_instance_id_or_domain: str = "library",
+        limit: int = 25,
+    ) -> dict[str, Any]:
+        """Get artists similar to the given artist.
+
+        Args:
+            item_id: The artist ID.
+            provider_instance_id_or_domain: Provider to query (default "library").
+            limit: Max results (default 25).
+        """
+        items = await client.command(
+            "music/artists/similar_artists",
+            item_id=item_id,
+            provider_instance_id_or_domain=provider_instance_id_or_domain,
+            limit=limit,
+        )
+        return {"artists": items, "count": len(items)}
+
+    @mcp.tool()
+    async def ma_get_similar_tracks(
+        item_id: str,
+        provider_instance_id_or_domain: str = "library",
+        limit: int = 25,
+    ) -> dict[str, Any]:
+        """Get tracks similar to the given track ("more like this").
+
+        Args:
+            item_id: The track ID.
+            provider_instance_id_or_domain: Provider to query (default "library").
+            limit: Max results (default 25).
+        """
+        items = await client.command(
+            "music/tracks/similar_tracks",
+            item_id=item_id,
+            provider_instance_id_or_domain=provider_instance_id_or_domain,
+            limit=limit,
+        )
+        return {"tracks": items, "count": len(items)}
+
+    @mcp.tool()
+    async def ma_get_recommendations() -> dict[str, Any]:
+        """Get recommendation rows (e.g. "Recently played", "Discover", provider picks).
+
+        Rows come without their items. Pass a row's provider and item_id to
+        ma_get_recommendation_items to fetch them.
+        """
+        rows = await client.command("music/recommendations")
+        return {"rows": rows, "count": len(rows)}
+
+    @mcp.tool()
+    async def ma_get_recommendation_items(provider: str, item_id: str) -> dict[str, Any]:
+        """Get the items for one recommendation row from ma_get_recommendations.
+
+        Args:
+            provider: The row's provider.
+            item_id: The row's item_id.
+        """
+        items = await client.command(
+            "music/recommendations/items", provider=provider, item_id=item_id
+        )
+        return {"items": items, "count": len(items)}
+
+    @mcp.tool()
+    async def ma_get_library_genres(
+        search: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """List genres in the library, optionally filtered by name.
+
+        Args:
+            search: Optional name filter (e.g. "jazz").
+            limit: Max items (default 50).
+            offset: Pagination offset.
+        """
+        items = await client.command(
+            "music/genres/library_items", search=search, limit=limit, offset=offset
+        )
+        return {"genres": items, "count": len(items), "offset": offset, "limit": limit}
+
+    @mcp.tool()
+    async def ma_get_genre_tracks(
+        item_id: str, limit: int = 50, offset: int = 0
+    ) -> dict[str, Any]:
+        """Get library tracks mapped to a genre.
+
+        Args:
+            item_id: The genre ID (from ma_get_library_genres).
+            limit: Max items (default 50).
+            offset: Pagination offset.
+        """
+        items = await client.command(
+            "music/genres/tracks", item_id=item_id, limit=limit, offset=offset
+        )
+        return {"tracks": items, "count": len(items), "offset": offset, "limit": limit}
+
+    @mcp.tool()
+    async def ma_get_genre_albums(
+        item_id: str, limit: int = 50, offset: int = 0
+    ) -> dict[str, Any]:
+        """Get library albums mapped to a genre.
+
+        Args:
+            item_id: The genre ID (from ma_get_library_genres).
+            limit: Max items (default 50).
+            offset: Pagination offset.
+        """
+        items = await client.command(
+            "music/genres/albums", item_id=item_id, limit=limit, offset=offset
+        )
+        return {"albums": items, "count": len(items), "offset": offset, "limit": limit}
+
+    @mcp.tool()
+    async def ma_get_track_lyrics(track_uri: str) -> dict[str, Any]:
+        """Get lyrics for a track.
+
+        Args:
+            track_uri: The track URI (e.g. "library://track/42").
+
+        Returns:
+            Plain lyrics and, if available, time-synced LRC lyrics.
+        """
+        track = await client.get_item_by_uri(track_uri)
+        lyrics, lrc = await client.command("metadata/get_track_lyrics", track=track)
+        return {"uri": track_uri, "lyrics": lyrics, "lrc_lyrics": lrc}

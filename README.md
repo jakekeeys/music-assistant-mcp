@@ -8,13 +8,13 @@ Built with [FastMCP](https://github.com/jlowin/fastmcp).
 
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **Search & Browse** | 15 tools | Search all providers, browse artists/albums/tracks/playlists/radio, get details |
-| **Player Control** | 11 tools | Play, pause, stop, volume, mute, play media, announcements |
-| **Queue Management** | 11 tools | Play media on queue, next/prev, shuffle, repeat, clear, transfer between players |
+| **Search & Browse** | 26 tools | Search, lookup by name, browse library/genres, recommendations, similar items, lyrics |
+| **Player Control** | 21 tools | Play, pause, stop, volume, power, grouping, sleep timer, announcements |
+| **Queue Management** | 16 tools | Play media on queue, next/prev, seek/skip, shuffle, repeat, clear, transfer, save as playlist |
 | **Playlists** | 3 tools | Create playlists, add/remove tracks |
 | **Favorites** | 2 tools | Add/remove items from library favorites |
 | **Server** | 2 tools | Server info, raw command escape-hatch |
-| **Total** | **46 tools** | |
+| **Total** | **70 tools** | |
 
 ## Quick Start
 
@@ -116,9 +116,9 @@ src/music_assistant_mcp/
 ├── client/
 │   └── api_client.py    # HTTP client for MA's POST /api
 └── tools/
-    ├── tools_search.py    # Library browsing & search (15 tools)
-    ├── tools_players.py   # Player control (11 tools)
-    ├── tools_queues.py    # Queue management (11 tools)
+    ├── tools_search.py    # Library browsing & search (26 tools)
+    ├── tools_players.py   # Player control (21 tools)
+    ├── tools_queues.py    # Queue management (16 tools)
     ├── tools_playlists.py # Playlist CRUD (3 tools)
     ├── tools_favorites.py # Favorites (2 tools)
     └── tools_server.py    # Server info & raw commands (2 tools)

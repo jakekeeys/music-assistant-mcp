@@ -27,10 +27,12 @@ def register_favorites_tools(mcp: Any, client: Any) -> None:
 
     @mcp.tool()
     async def ma_remove_from_favorites(item_uri: str) -> dict[str, Any]:
-        """Remove a media item from your favorites / library.
+        """Remove a media item from your favorites.
 
         Args:
-            item_uri: URI of the item to un-favorite.
+            item_uri: Library URI of the item to un-favorite
+                (e.g. "library://track/42"). Provider URIs are not accepted;
+                look the item up first to get its library URI.
 
         Returns:
             Success status.

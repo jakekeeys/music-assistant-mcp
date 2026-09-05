@@ -52,6 +52,9 @@ def register_queues_tools(mcp: Any, client: Any) -> None:
         queue_id: str,
         media: str | list[str],
         option: str = "play",
+        radio_mode: bool = False,
+        shuffle: bool | None = None,
+        start_item: str | None = None,
     ) -> dict[str, Any]:
         """Play media item(s) on a queue.
 
@@ -69,6 +72,10 @@ def register_queues_tools(mcp: Any, client: Any) -> None:
                 - "next": Insert as next item(s) in queue
                 - "replace_next": Replace all upcoming items
                 - "add": Add to end of queue
+            radio_mode: Use the media as a seed and keep playing similar music
+                ("play something like X").
+            shuffle: Override the queue's shuffle setting for this request.
+            start_item: URI of the item within an album/playlist to start from.
 
         Returns:
             Success status.
@@ -76,10 +83,16 @@ def register_queues_tools(mcp: Any, client: Any) -> None:
         Examples:
             - Play an album: ma_queue_play_media("player1", "library://album/5")
             - Add to queue: ma_queue_play_media("player1", "library://track/42", option="add")
-            - Play next: ma_queue_play_media("player1", "spotify://track/abc", option="next")
+            - Artist radio: ma_queue_play_media("player1", "library://artist/9", radio_mode=True)
         """
         await client.queue_command(
-            queue_id, "play_media", media=media, option=option
+            queue_id,
+            "play_media",
+            media=media,
+            option=option,
+            radio_mode=radio_mode,
+            shuffle=shuffle,
+            start_item=start_item,
         )
         return {"success": True, "queue_id": queue_id, "media": media, "option": option}
 
@@ -265,3 +278,52 @@ def register_queues_tools(mcp: Any, client: Any) -> None:
             "to": target_queue_id,
             "auto_play": auto_play,
         }
+
+    @mcp.tool()
+    async def ma_get_active_queue(player_id: str) -> dict[str, Any]:
+        """Get the queue a player is actually playing from.
+
+        For grouped/synced players the active queue belongs to the group leader,
+        so queue_id may differ from player_id. Use this before queue commands
+        when players are grouped.
+
+        Args:
+            player_id: The player to resolve.
+
+        Returns:
+            The active queue object, or null.
+        """
+        return await client.command("player_queues/get_active_queue", player_id=player_id)
+
+    @mcp.tool()
+    async def ma_queue_seek(queue_id: str, position: int) -> dict[str, Any]:
+        """Seek to an absolute position in the current track.
+
+        Args:
+            queue_id: The queue to control.
+            position: Position in seconds from the start of the track.
+        """
+        await client.queue_command(queue_id, "seek", position=position)
+        return {"success": True, "queue_id": queue_id, "position": position}
+
+    @mcp.tool()
+    async def ma_queue_skip(queue_id: str, seconds: int = 10) -> dict[str, Any]:
+        """Skip forward or backward within the current track.
+
+        Args:
+            queue_id: The queue to control.
+            seconds: Seconds to skip. Positive = forward, negative = backward.
+        """
+        await client.queue_command(queue_id, "skip", seconds=seconds)
+        return {"success": True, "queue_id": queue_id, "seconds": seconds}
+
+    @mcp.tool()
+    async def ma_queue_save_as_playlist(queue_id: str, name: str) -> dict[str, Any]:
+        """Save the current queue contents as a new playlist.
+
+        Args:
+            queue_id: The queue to save.
+            name: Name for the new playlist.
+        """
+        await client.queue_command(queue_id, "save_as_playlist", name=name)
+        return {"success": True, "queue_id": queue_id, "playlist_name": name}
